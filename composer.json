@@ -1,0 +1,15 @@
+{
+    "name": "satyr-software/cryptotool",
+    "description": "PHP Toolkit for Cryptocurrency",
+    "autoload": {
+        "psr-4": {
+            "SatyrSoftware\\Cryptotool\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "satyr-software"
+        }
+    ],
+    "require": {}
+}
