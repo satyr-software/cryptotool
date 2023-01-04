@@ -8,7 +8,8 @@
  *  BIP39::Entropy($bitstring)
  * Outputs
  * ->entropy		// Raw binary
- * ->dumpMnemonic()	// Dump array of mnemonic words
+ * ->toMnemonic()	// Dump array of mnemonic words
+ * ->toSeed()		// Dump actual seed
  *
  * Uses "wordCount" to compute the rest? Presetting vars is faster, but calculating on the fly allows adjustment?
  */
@@ -22,6 +23,8 @@ class BIP39
 	private $wordList;	// Loaded upon object creation
 
 	private $language;	// just to keep track
+
+	/* Entry points */
 
 	# Accepts both raw binary, or hex(lowercase)
 	public static function Entropy(string $entropy): self
@@ -39,11 +42,13 @@ class BIP39
 		}
 		throw new \Exception('Not Hex and not binary of right length');
 	}
+
 	# Straight generate - just need wordcount/length
 	public static function Generate(int $wordCount = 12): self
 	{
 		return (new self($wordCount))->generateEntropy();
 	}
+
 	# Accepts string or array
 	public static function Mnemonic($words, ?WordList $wordList = null, bool $verifyChecksum = true): self
 	{
@@ -58,7 +63,7 @@ class BIP39
 			->resolveMnemonic($words,$verifyChecksum);
 	}
 
-
+	# Actual constructor that preloads words, and mini checks
 	public function __construct(int $wordCount=12,?string $language='english',?string $entropy = null)
 	{
 		if ($wordCount < 12 || $wordCount > 24) {
@@ -89,6 +94,55 @@ class BIP39
 		if (count($this->wordList) !== 2048)
 		{
 			throw new Exception('BIP39: Wordlist file must have exactly 2048 words');
+		}
+	}
+
+	/* Output functions */
+	public function toMnemonic():array
+	{
+		if (is_null($this->entropy)) { return []; }
+		$fullbytes=$this->entropy . self::generateChecksum();
+		$binarystring='';
+		for ($i=0; $i < strlen($fullbytes); $i++)
+		{
+			$binarystring.=str_pad( decbin(ord($fullbytes[$i])) ,8,'0',STR_PAD_LEFT);
+		}
+		if (self::getChecksumBits() !== 8 )	// if 8, it miscalcs it as 0 to 0 (trim all). at 8 bytes, it's perfectly no trim
+		{
+			$wordsplits=str_split( substr($binarystring,0,-(8-self::getChecksumBits())), 11);	// Trim off excess binary
+		}
+		else
+		{
+			$wordsplits=str_split( $binarystring, 11);	// Trim off excess binary
+		}
+		$wordlist=[];
+		foreach ($wordsplits as $wordsplit)
+		{
+			$wordlist[]=$this->wordList[bindec($wordsplit)];
+		}
+		return $wordlist;
+	}
+
+	public function toSeed(?string $passphrase):string
+	{
+		return hash_pbkdf2('sha512',implode(' ',self::toMnemonic()),'mnemonic'.$passphrase,2048,64,true);
+	}
+
+	/* Internal functions */
+	private function generateEntropy(): self
+	{
+		$this->entropy=(random_bytes($this->entropyBits / 8));
+		return $this;
+	}
+
+	# Validation of entropy : has to be hex, and of a particular length in bits
+	private static function validateEntropyHex(string $entropy): void
+	{
+		if (!preg_match('/^[a-f0-9]{2,}$/', $entropy)) {
+			throw new \Exception('Invalid entropy (requires hexadecimal)');
+		}
+		if (!in_array(strlen($entropy), [32, 40, 48, 56, 64])) {
+			throw new \Exception('Invalid entropy length');
 		}
 	}
 
@@ -133,49 +187,6 @@ class BIP39
 	{
 		$checksumChar = ord(hash("sha256",$this->entropy,true)[0]);
 		return chr( ($checksumChar>>(8-self::getChecksumBits())) << (8-self::getChecksumBits())  );	// This is appended to the end
-	}
-
-	public function dumpMnemonic():array
-	{
-		if (is_null($this->entropy)) { return []; }
-		$fullbytes=$this->entropy . self::generateChecksum();
-		$binarystring='';
-		for ($i=0; $i < strlen($fullbytes); $i++)
-		{
-			$binarystring.=str_pad( decbin(ord($fullbytes[$i])) ,8,'0',STR_PAD_LEFT);
-		}
-		if (self::getChecksumBits() !== 8 )	// if 8, it miscalcs it as 0 to 0 (trim all). at 8 bytes, it's perfectly no trim
-		{
-			$wordsplits=str_split( substr($binarystring,0,-(8-self::getChecksumBits())), 11);	// Trim off excess binary
-		}
-		else
-		{
-			$wordsplits=str_split( $binarystring, 11);	// Trim off excess binary
-		}
-		$wordlist=[];
-		foreach ($wordsplits as $wordsplit)
-		{
-#			echo "Word bits: ".$wordsplit."\n";
-			$wordlist[]=$this->wordList[bindec($wordsplit)];
-		}
-		return $wordlist;
-	}
-
-	private function generateEntropy(): self
-	{
-		$this->entropy=(random_bytes($this->entropyBits / 8));
-		return $this;
-	}
-
-	# Validation of entropy : has to be hex, and of a particular length in bits
-	private static function validateEntropyHex(string $entropy): void
-	{
-		if (!preg_match('/^[a-f0-9]{2,}$/', $entropy)) {
-			throw new \Exception('Invalid entropy (requires hexadecimal)');
-		}
-		if (!in_array(strlen($entropy), [32, 40, 48, 56, 64])) {
-			throw new \Exception('Invalid entropy length');
-		}
 	}
 }
 ?>
