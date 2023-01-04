@@ -55,7 +55,7 @@ class BIP39
 			throw new MnemonicException('BIP39: Mnemonic() requires an Array of words');
 		}
 		return (new self(count($words), ($wordList ? $wordlist :  'english')))
-			->resolveMnemonic($words);
+			->resolveMnemonic($words,$verifyChecksum);
 	}
 
 
@@ -98,7 +98,7 @@ class BIP39
 		return $this;
 	}
 
-	private function resolveMnemonic(array $wordList):self
+	private function resolveMnemonic(array $wordList,?bool $verifyChecksum):self
 	{
 		$binarystring='';
 		foreach ($wordList as $word)
@@ -113,7 +113,17 @@ class BIP39
 		{
 			$this->entropy .= chr( bindec(substr($binarystring,($i*8),8)) );
 		}
+
+		$cksum=substr($this->entropy,-1);		// Take the last byte off for verification
+		if (self::getChecksumBits()<>8)			// Pad the rest with 0's for comparison
+		{
+			$cksum=chr( ord($cksum) << self::getChecksumBits() );
+		}
 		$this->entropy=substr($this->entropy,0,-1);	// Trim the last checksum bit off
+		if ( ($verifyChecksum === true) && ($cksum !== self::generateChecksum()))
+		{
+			throw new \Exception('BIP39: Checksum failed for Mnemonic');
+		}
 		return $this;
 	}
 
