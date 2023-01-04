@@ -113,13 +113,13 @@ class BIP39
 		{
 			$this->entropy .= chr( bindec(substr($binarystring,($i*8),8)) );
 		}
-
 		$cksum=substr($this->entropy,-1);		// Take the last byte off for verification
-		if (self::getChecksumBits()<>8)			// Pad the rest with 0's for comparison
+		$this->entropy=substr($this->entropy,0,-1);	// Trim the last checksum bit off
+
+		if (self::getChecksumBits()<>8)			// Pad the right with 0's for comparison
 		{
 			$cksum=chr( ord($cksum) << self::getChecksumBits() );
 		}
-		$this->entropy=substr($this->entropy,0,-1);	// Trim the last checksum bit off
 		if ( ($verifyChecksum === true) && ($cksum !== self::generateChecksum()))
 		{
 			throw new \Exception('BIP39: Checksum failed for Mnemonic');
