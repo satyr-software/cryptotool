@@ -21,6 +21,7 @@ class BIP39
 {
 	public $entropy;	// Allow access from outside just for pure query
 	private $wordList;	// Loaded upon object creation
+	private $wordsCount;	// For Generate()
 
 	private $language;	// just to keep track
 
@@ -131,7 +132,7 @@ class BIP39
 	/* Internal functions */
 	private function generateEntropy(): self
 	{
-		$this->entropy=(random_bytes($this->entropyBits / 8));
+		$this->entropy=(random_bytes(($this->wordsCount*4)/3));
 		return $this;
 	}
 

@@ -11,5 +11,7 @@
             "name": "satyr-software"
         }
     ],
-    "require": {}
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    }
 }

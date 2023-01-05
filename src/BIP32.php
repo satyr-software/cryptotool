@@ -37,7 +37,6 @@ class BIP32
 			throw new \Exception('BIP32: Seed is expecting 64 byte (binary) or 128 byte (hex) output from BIP39. Given='.strlen($seed));
 		}
 		$master_key=hash_hmac('sha512',$this->seed,'Bitcoin seed',true);
-		echo "Len=".strlen($this->seed)."\n";
 		$this->master_private_key=substr($master_key,0,32);
 		$this->master_chain_code=substr($master_key,32);
 	}
