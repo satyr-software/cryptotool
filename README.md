@@ -20,19 +20,31 @@ use SatyrSoftware\Cryptotool\BIP39
 ```
 ### Entry points
  BIP39::Mnemonic(string|array)
+
  BIP39::Generate(int words)
+
  BIP39::Entropy(string hextring)
+
 ### Outputs
  ->toMnemonic():array[words]
+
  ->toSeed(): string(binary)
+
  ->entropy : string(binary)
 
 ## BIP32 - Extended Keys/HD Wallets
+
+Disclaimer: BIP32 uses ECCurve implementation that is not personally verified.
+
 ```
 use SatyrSoftware\Cryptotool\BIP32
+```
 ### Entry points
+
  new BIP32(string[binary|hex])
+
 ### Outputs
+
  ->seed
 
 # Ideas
