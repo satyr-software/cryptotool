@@ -16,12 +16,15 @@
 declare(strict_types=1);
 
 namespace SatyrSoftware\Cryptotool;
+use Elliptic\EC;
 
 class BIP32
 {
 	public $seed;
 	public $master_private_key;
 	public $master_chain_code;
+
+	public $master_public_key;
 
 	/* Entry points */
 
@@ -39,8 +42,15 @@ class BIP32
 		$master_key=hash_hmac('sha512',$this->seed,'Bitcoin seed',true);
 		$this->master_private_key=substr($master_key,0,32);
 		$this->master_chain_code=substr($master_key,32);
+
+		$priv=(new EC('secp256k1'))->keyFromPrivate(bin2hex($this->master_private_key));
+		$this->master_public_key=hex2bin($priv->getPublic(true,"hex"));
 	}
 
+	public function toPublic()
+	{
+		return $this->master_public_key;
+	}
 	/* Output functions */
 	/* Internal functions */
 

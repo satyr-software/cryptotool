@@ -26,6 +26,7 @@ use SatyrSoftware\Cryptotool\BIP39
  BIP39::Entropy(string hextring)
 
 ### Outputs
+
  ->toMnemonic():array[words]
 
  ->toSeed(): string(binary)
@@ -45,7 +46,12 @@ use SatyrSoftware\Cryptotool\BIP32
 
 ### Outputs
 
- ->seed
+ ->master_private_key
+ ->master_public_key
+ ->master_chain_code
+
+## Mnemonic - Mnemonic tool
+This is a clone for BIP39 but with more generic parameters (no checksumming, etc) for use with other Crypto HD Gen like QRL
 
 # Ideas
 
@@ -57,3 +63,6 @@ use SatyrSoftware\Cryptotool\BIP32
 
 - Based partially on code at [furqansiddiqui/bip39-mnemonic-php](https://github.com/furqansiddiqui/bip39-mnemonic-php/)
  Rewrote a lot of the code
+- Outsourced a lot of the Elliptic Curve maths to [simplito/elliptic-php](https://github.com/simplito/elliptic-php)
+- Base58 conversion done by Stephen Hill package [stephenhill/base58](https://github.com/stephenhill/base58)
+

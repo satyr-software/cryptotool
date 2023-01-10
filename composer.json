@@ -13,5 +13,9 @@
     ],
     "require-dev": {
         "phpunit/phpunit": "^9.5"
+    },
+    "require": {
+        "simplito/elliptic-php": "^1.0",
+        "stephenhill/base58": "^1.1"
     }
 }

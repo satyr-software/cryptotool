@@ -9,6 +9,7 @@ class BIP39Test extends \PHPUnit\Framework\TestCase
 	public $test_cases=array(
 		[
 			'mnemonic'	=> 'ripple attitude job slide fiber ordinary purpose wish silver ugly junk predict',
+			'mnemonic_es'	=> 'premio añadir juntar roce farmacia novato pegar vivir retrato tos lacra paloma',
 			'entropy'	=> 'ba41d5e065c55b38ab9fe4c8dd81e554',
 			'seed'		=> '8506c04f131cdbc4c4ce8e2af7f964ff9bab2fefccc13c49bb3159a08c0d923e4666eca953892a7ffbb945241d656553905aa0ba4a6c3fdc4486fdc79b778cd3',
 			'passphrase'	=> '',
@@ -45,6 +46,14 @@ class BIP39Test extends \PHPUnit\Framework\TestCase
 			$bip39 = BIP39::Mnemonic(explode(' ',$test['mnemonic']));			// Array input
 			$this->assertEquals($test['mnemonic'],implode(' ',$bip39->toMnemonic()));
 			$this->assertEquals($test['entropy'],bin2hex($bip39->entropy));
+
+			$bip39->loadDictionary('spanish');						// Convert to Spanish
+			$this->assertEquals($test['mnemonic_es'],implode(' ',$bip39->toMnemonic()));
+
+			$bip39 = BIP39::Mnemonic(explode(' ',$test['mnemonic_es']),'spanish');		// Load up as Spanish
+			$bip39->loadDictionary('english');						// Convert to English
+			$this->assertEquals($test['mnemonic'],implode(' ',$bip39->toMnemonic()));
+			$this->assertEquals($test['entropy'],bin2hex($bip39->entropy));
 		}
 
 	}
@@ -52,11 +61,11 @@ class BIP39Test extends \PHPUnit\Framework\TestCase
 	{
 		foreach ($this->test_cases as $test)
 		{
-			$bip39 = Bip39::Entropy($test['entropy']);					// Hex input
+			$bip39 = BIP39::Entropy($test['entropy']);					// Hex input
 			$this->assertEquals($test['mnemonic'],implode(' ',$bip39->toMnemonic()));	// Also checks wordcount at the same time
 			$this->assertEquals($test['entropy'],bin2hex($bip39->entropy));			// Auto check for strlen
 
-			$bip39 = Bip39::Entropy(hex2bin($test['entropy']));				// Binary input
+			$bip39 = BIP39::Entropy(hex2bin($test['entropy']));				// Binary input
 			$this->assertEquals($test['mnemonic'],implode(' ',$bip39->toMnemonic()));
 			$this->assertEquals($test['entropy'],bin2hex($bip39->entropy));
 		}
@@ -65,7 +74,7 @@ class BIP39Test extends \PHPUnit\Framework\TestCase
 	{
 		foreach ($this->test_cases as $test)
 		{
-			$bip39 = Bip39::Entropy($test['entropy']);
+			$bip39 = BIP39::Entropy($test['entropy']);
 			$this->assertEquals($test['seed'],bin2hex($bip39->toSeed($test['passphrase'])));
 		}
 	}

@@ -51,7 +51,7 @@ class BIP39
 	}
 
 	# Accepts string or array
-	public static function Mnemonic($words, ?WordList $wordList = null, bool $verifyChecksum = true): self
+	public static function Mnemonic($words, ?string $dictionary = 'english', bool $verifyChecksum = true): self
 	{
 		if (is_string($words)) {
 			$words = explode(" ", $words);
@@ -60,7 +60,7 @@ class BIP39
 		if (!is_array($words)) {
 			throw new MnemonicException('BIP39: Mnemonic() requires an Array of words');
 		}
-		return (new self(count($words), ($wordList ? $wordlist :  'english')))
+		return (new self(count($words), $dictionary))
 			->resolveMnemonic($words,$verifyChecksum);
 	}
 
@@ -80,6 +80,12 @@ class BIP39
 		$this->language = trim($language);
 		$this->wordList = [];
 
+		$this->loadDictionary($this->language);
+	}
+
+	public function loadDictionary(?string $dictionary='english')
+	{
+		$this->language=$dictionary;
 		$wordListFile = sprintf('%1$s%2$swordlists%2$s%3$s.txt', __DIR__, DIRECTORY_SEPARATOR, $this->language);
 		if (!file_exists($wordListFile) || !is_readable($wordListFile))
 		{
@@ -87,6 +93,7 @@ class BIP39
 		}
 
 		$wordList = preg_split("/(\r\n|\n|\r)/", file_get_contents($wordListFile));
+		$this->wordList=[];
 		foreach ($wordList as $word)
 		{
 			$this->wordList[] = trim($word);
@@ -97,7 +104,6 @@ class BIP39
 			throw new Exception('BIP39: Wordlist file must have exactly 2048 words');
 		}
 	}
-
 	/* Output functions */
 	public function toMnemonic():array
 	{
@@ -155,6 +161,7 @@ class BIP39
 
 	private function resolveMnemonic(array $wordList,?bool $verifyChecksum):self
 	{
+		$this->loadDictionary($this->language);
 		$binarystring='';
 		foreach ($wordList as $word)
 		{
