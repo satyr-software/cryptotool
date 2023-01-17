@@ -6,10 +6,14 @@
  *  BIP39::Generate(wordCount)
  *  BIP39::Mnemonic(string|array)
  *  BIP39::Entropy($bitstring)
+ * Inherited:
+ *  generateEntropy()
+ *  setEntropy(string) 
+ *  public->entropy		// Raw binary
+ *  protected->dictionary;	// just to keep track
  * Outputs
- * ->entropy		// Raw binary
- * ->toMnemonic()	// Dump array of mnemonic words
- * ->toSeed()		// Dump actual seed
+ * ->toMnemonic()	// Customized due to checksumming
+ * ->toSeed()		// Customized for Bitcoin
  *
  * Uses "wordCount" to compute the rest? Presetting vars is faster, but calculating on the fly allows adjustment?
  */
@@ -17,17 +21,19 @@ declare(strict_types=1);
 
 namespace SatyrSoftware\Cryptotool;
 
-class BIP39
+use SatyrSoftware\Cryptotool\Mnemonic;
+
+class BIP39 extends Mnemonic
 {
-	public $entropy;	// Allow access from outside just for pure query
-	private $wordList;	// Loaded upon object creation
+	protected $wordList;	// Loaded upon object creation
 	private $wordsCount;	// For Generate()
 
-	private $language;	// just to keep track
 
 	/* Entry points */
 
 	# Accepts both raw binary, or hex(lowercase)
+	#
+	# OVERRIDE fully
 	public static function Entropy(string $entropy): self
 	{
 		if (preg_match('/^[a-f0-9]{2,}$/', strtolower($entropy)))		// Only Hex characters (chances of raw string being that way is 0%)
@@ -47,7 +53,7 @@ class BIP39
 	# Straight generate - just need wordcount/length
 	public static function Generate(int $wordCount = 12): self
 	{
-		return (new self($wordCount))->generateEntropy();
+		return (new self($wordCount))->generateEntropy(($wordCount*11)-($wordCount/3));
 	}
 
 	# Accepts string or array
@@ -65,7 +71,7 @@ class BIP39
 	}
 
 	# Actual constructor that preloads words, and mini checks
-	public function __construct(int $wordCount=12,?string $language='english',?string $entropy = null)
+	public function __construct(int $wordCount=12,?string $dictionary='english',?string $entropy = null)
 	{
 		if ($wordCount < 12 || $wordCount > 24) {
 			echo "BIP39: Word count of $wordCount sent in\n";
@@ -77,19 +83,19 @@ class BIP39
 		$this->wordsCount=$wordCount;
 		$this->entropy = $entropy;
 
-		$this->language = trim($language);
+		$this->dictionary = trim($dictionary);
 		$this->wordList = [];
 
-		$this->loadDictionary($this->language);
+		$this->loadDictionary($this->dictionary);
 	}
 
 	public function loadDictionary(?string $dictionary='english')
 	{
-		$this->language=$dictionary;
-		$wordListFile = sprintf('%1$s%2$swordlists%2$s%3$s.txt', __DIR__, DIRECTORY_SEPARATOR, $this->language);
+		$this->dictionary=$dictionary;
+		$wordListFile = sprintf('%1$s%2$swordlists%2$s%3$s.txt', __DIR__, DIRECTORY_SEPARATOR, $this->dictionary);
 		if (!file_exists($wordListFile) || !is_readable($wordListFile))
 		{
-			throw new Exception( sprintf('BIP39 wordlist for "%s" not found or is not readable', ucfirst($this->language)) );
+			throw new Exception( sprintf('BIP39 wordlist for "%s" not found or is not readable', ucfirst($this->dictionary)) );
 		}
 
 		$wordList = preg_split("/(\r\n|\n|\r)/", file_get_contents($wordListFile));
@@ -105,6 +111,9 @@ class BIP39
 		}
 	}
 	/* Output functions */
+	/**
+	 * Has to be custom'd due to Checksum addition then uneven bits
+	 **/
 	public function toMnemonic():array
 	{
 		if (is_null($this->entropy)) { return []; }
@@ -136,32 +145,22 @@ class BIP39
 	}
 
 	/* Internal functions */
-	private function generateEntropy(): self
-	{
-		$this->entropy=(random_bytes(($this->wordsCount*4)/3));
-		return $this;
-	}
-
+	/*
+	 * generateEntropy() = parent
+	 * setEntropy(string) = parent
+	 */
 	# Validation of entropy : has to be hex, and of a particular length in bits
-	private static function validateEntropyHex(string $entropy): void
+	protected static function validateEntropyHex(string $entropy): void
 	{
-		if (!preg_match('/^[a-f0-9]{2,}$/', $entropy)) {
-			throw new \Exception('Invalid entropy (requires hexadecimal)');
-		}
+		parent::validateEntropyHex($entropy);
 		if (!in_array(strlen($entropy), [32, 40, 48, 56, 64])) {
 			throw new \Exception('Invalid entropy length');
 		}
 	}
 
-	private function setEntropy($entropy=null):self
-	{
-		$this->entropy=$entropy;
-		return $this;
-	}
-
 	private function resolveMnemonic(array $wordList,?bool $verifyChecksum):self
 	{
-		$this->loadDictionary($this->language);
+		$this->loadDictionary($this->dictionary);
 		$binarystring='';
 		foreach ($wordList as $word)
 		{

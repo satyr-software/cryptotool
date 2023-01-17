@@ -1,4 +1,5 @@
 # CryptoTool
+[![License: MIT](https://img.shields.io/github/license/satyr-software/cryptotool)](https://github.com/satyr-software/cryptotool/blob/master/LICENSE)
 
 This will be a tool to cover most utilities required to make a Cryptocurrency tool (Mostly HD Wallets)
 
@@ -51,7 +52,13 @@ use SatyrSoftware\Cryptotool\BIP32
  ->master_chain_code
 
 ## Mnemonic - Mnemonic tool
-This is a clone for BIP39 but with more generic parameters (no checksumming, etc) for use with other Crypto HD Gen like QRL
+This is a clone for BIP39 but with more generic parameters (no checksumming, etc) for use with other Crypto HD Gen like QRL. The unit is now in 'bits' not words, as different coins
+can end up with different length wordlists (eg. 4096 = QRL). Autodetects the bits from dictionary
+```
+ new Mnemonic::Mnemonic(string|array,dictionary)
+```
+This module will be Beta for a bit, but will be used for just about any other non-BIP39 compliant coin
+
 
 # Ideas
 
