@@ -27,11 +27,11 @@ class BIP32Test extends \PHPUnit\Framework\TestCase
 		foreach ($this->test_cases as $test)
 		{
 			$bip32 = new BIP32($test['seed']);				// Hex input
-			$this->assertEquals($test['seed'],bin2hex($bip32->seed));
+			$this->assertEquals($test['seed'],bin2hex($bip32->toSeed()));
 #echo "Master Private Key = ".bin2hex($bip32->master_private_key)."\n";
 #echo "Master Chain Code  = ".bin2hex($bip32->master_chain_code)."\n";
 			$bip32 = new BIP32(hex2bin($test['seed']));			// Binary input
-			$this->assertEquals($test['seed'],bin2hex($bip32->seed));
+			$this->assertEquals($test['seed'],bin2hex($bip32->toSeed()));
 		}
 	}
 }
